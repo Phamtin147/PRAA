@@ -3,6 +3,7 @@ package com.company.praa.service;
 import com.company.praa.dto.EmployeeDto;
 import com.company.praa.entity.Employee;
 import com.company.praa.repository.EmployeeRepository;
+import com.company.praa.repository.ResourceAllocationRepository;
 import com.company.praa.exception.EmployeeNotFoundException;
 import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -18,9 +19,21 @@ public class EmployeeService {
     @Autowired
     private EmployeeRepository repository;
 
+    @Autowired
+    private ResourceAllocationRepository allocationRepository;
+
     public EmployeeDto createEmployee(EmployeeDto dto) {
+        String code = dto.getEmployeeCode();
+        if (code == null || code.isBlank()) {
+            code = repository.findMaxEmployeeCode()
+                    .map(maxCode -> {
+                        int num = Integer.parseInt(maxCode.replace("EMP", "")) + 1;
+                        return String.format("EMP%03d", num);
+                    })
+                    .orElse("EMP001");
+        }
         Employee employee = Employee.builder()
-                .employeeCode(dto.getEmployeeCode())
+                .employeeCode(code)
                 .fullName(dto.getFullName())
                 .email(dto.getEmail())
                 .role(dto.getRole())
@@ -28,6 +41,7 @@ public class EmployeeService {
                 .build();
         repository.save(employee);
         dto.setEmployeeId(employee.getEmployeeId());
+        dto.setEmployeeCode(code);
         return dto;
     }
 
@@ -76,6 +90,9 @@ public class EmployeeService {
     public void deleteEmployee(Long id) {
         if (!repository.existsById(id)) {
             throw new EmployeeNotFoundException("Employee not found with ID " + id);
+        }
+        if (!allocationRepository.findByEmployeeEmployeeId(id).isEmpty()) {
+            throw new RuntimeException("Cannot delete employee with active allocations");
         }
         repository.deleteById(id);
     }

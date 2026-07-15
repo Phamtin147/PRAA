@@ -1,13 +1,13 @@
 import { useState, useEffect, useCallback } from 'react';
 import {
-  Box, Card, CardContent, Typography, TextField, Dialog, DialogTitle,
+  Box, Typography, TextField, Dialog, DialogTitle,
   DialogContent, DialogActions, Button, IconButton, Tooltip, Autocomplete,
-  Slider, CircularProgress, Alert, Snackbar, Grid, Stack, useTheme,
+  Slider, CircularProgress, Alert, Snackbar, Grid, useTheme,
   LinearProgress,
 } from '@mui/material';
 import {
-  Delete as DeleteIcon, Edit as EditIcon, Warning as WarningIcon,
-  CheckCircle as CheckCircleIcon,
+  Delete as DeleteIcon, Edit as EditIcon, WorkHistory as WorkHistoryIcon,
+  Person as PersonIcon, CalendarMonth as CalendarMonthIcon,
 } from '@mui/icons-material';
 import { DataGrid } from '@mui/x-data-grid';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -173,43 +173,80 @@ export default function Allocations() {
       valueGetter: (value, row) => getEmpName(row.employeeId) },
     { field: 'projectName', headerName: 'Project', flex: 1, minWidth: 150,
       valueGetter: (value, row) => getProjName(row.projectId) },
-    { field: 'allocationPercent', headerName: 'Allocation %', width: 130,
-      renderCell: (params) => (
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, width: '100%' }}>
-          <LinearProgress
-            variant="determinate"
-            value={params.value}
-            sx={{
-              flex: 1,
-              height: 8,
-              borderRadius: 4,
-              backgroundColor: theme.palette.mode === 'dark' ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.06)',
-              '& .MuiLinearProgress-bar': {
-                backgroundColor: allocColor(params.value),
-                borderRadius: 4,
-              },
-            }}
-          />
-          <Typography variant="body2" sx={{ fontWeight: 700, minWidth: 35, color: allocColor(params.value) }}>
-            {params.value}%
-          </Typography>
-        </Box>
-      ),
+    { field: 'allocationPercent', headerName: 'Allocation %', width: 150,
+      renderCell: (params) => {
+        const pct = params.value;
+        return (
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, width: '100%', pr: 1 }}>
+            <Box sx={{ flex: 1, borderRadius: 5, overflow: 'hidden' }}>
+              <LinearProgress
+                variant="determinate"
+                value={pct}
+                sx={{
+                  height: 10,
+                  borderRadius: 5,
+                  backgroundColor: theme.palette.mode === 'dark' ? 'rgba(255,255,255,0.08)' : 'rgba(103,80,164,0.1)',
+                  '& .MuiLinearProgress-bar': {
+                    background: `linear-gradient(90deg, ${allocColor(pct)}bb, ${allocColor(pct)})`,
+                    borderRadius: 5,
+                    boxShadow: `0 1px 4px ${allocColor(pct)}66`,
+                  },
+                }}
+              />
+            </Box>
+            <Typography variant="body2" sx={{
+              fontWeight: 800,
+              minWidth: 40,
+              color: allocColor(pct),
+              fontSize: '0.8125rem',
+              fontVariantNumeric: 'tabular-nums',
+            }}>
+              {pct}%
+            </Typography>
+          </Box>
+        );
+      },
     },
     { field: 'roleInProject', headerName: 'Role', width: 140 },
     { field: 'startDate', headerName: 'Start', width: 110 },
     { field: 'endDate', headerName: 'End', width: 110 },
     {
-      field: 'actions', headerName: 'Actions', width: 110, sortable: false,
+      field: 'actions', headerName: 'Actions', width: 120, sortable: false,
       renderCell: (params) => (
-        <Box>
-          <Tooltip title="Edit">
-            <IconButton size="small" onClick={() => handleOpenEdit(params.row)} sx={{ color: theme.palette.primary.main }}>
+        <Box sx={{ display: 'flex', gap: 0.5 }}>
+          <Tooltip title="Edit allocation" arrow>
+            <IconButton
+              size="small"
+              onClick={() => handleOpenEdit(params.row)}
+              sx={{
+                color: theme.palette.primary.main,
+                backgroundColor: theme.palette.mode === 'dark' ? 'rgba(103,80,164,0.12)' : 'rgba(103,80,164,0.08)',
+                transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
+                '&:hover': {
+                  backgroundColor: theme.palette.primary.main,
+                  color: '#fff',
+                  transform: 'scale(1.1)',
+                },
+              }}
+            >
               <EditIcon fontSize="small" />
             </IconButton>
           </Tooltip>
-          <Tooltip title="Delete">
-            <IconButton size="small" onClick={() => handleDeleteClick(params.row)} sx={{ color: theme.palette.error.main }}>
+          <Tooltip title="Delete allocation" arrow>
+            <IconButton
+              size="small"
+              onClick={() => handleDeleteClick(params.row)}
+              sx={{
+                color: theme.palette.error.main,
+                backgroundColor: theme.palette.mode === 'dark' ? 'rgba(244,67,54,0.12)' : 'rgba(244,67,54,0.08)',
+                transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
+                '&:hover': {
+                  backgroundColor: theme.palette.error.main,
+                  color: '#fff',
+                  transform: 'scale(1.1)',
+                },
+              }}
+            >
               <DeleteIcon fontSize="small" />
             </IconButton>
           </Tooltip>
@@ -225,41 +262,53 @@ export default function Allocations() {
 
   return (
     <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.3 }}>
-      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
-        <Typography variant="h4" sx={{ fontWeight: 800 }}>Allocations</Typography>
+      <Box sx={{
+        display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+        mb: 4, pb: 2.5, borderBottom: `2px solid ${theme.palette.divider}`,
+      }}>
+        <Box>
+          <Typography variant="h4" sx={{
+            fontWeight: 800,
+            background: `linear-gradient(135deg, ${theme.palette.primary.main}, ${theme.palette.primary.dark})`,
+            WebkitBackgroundClip: 'text',
+            WebkitTextFillColor: 'transparent',
+            letterSpacing: '-0.02em',
+          }}>
+            Allocations
+          </Typography>
+          <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5, fontWeight: 500 }}>
+            Manage resource allocation across projects
+          </Typography>
+        </Box>
         <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
-          <Button variant="contained" onClick={handleOpenAdd}>
+          <Button variant="contained" onClick={handleOpenAdd} sx={{ px: 3, py: 1 }}>
             Add Allocation
           </Button>
         </motion.div>
       </Box>
 
-      <Card>
-        <CardContent>
-          <DataGrid
-            rows={allocations}
-            columns={columns}
-            loading={loading}
-            getRowId={(row) => row.allocationId || row.id}
-            pageSizeOptions={[5, 10, 25]}
-            initialState={{ pagination: { paginationModel: { pageSize: 10 } } }}
-            disableRowSelectionOnClick
-            autoHeight
-            sx={{
-              border: 'none',
-              '& .MuiDataGrid-cell': { py: 1.5 },
-              '& .MuiDataGrid-columnHeaders': {
-                backgroundColor: theme.palette.mode === 'dark' ? 'rgba(255,255,255,0.03)' : 'rgba(103,80,164,0.04)',
-                borderRadius: 1,
-              },
-              '& .MuiDataGrid-row': {
-                transition: 'background-color 0.2s',
-                '&:hover': { backgroundColor: theme.palette.mode === 'dark' ? 'rgba(255,255,255,0.04)' : 'rgba(103,80,164,0.03)' },
-              },
-            }}
-          />
-        </CardContent>
-      </Card>
+      <DataGrid
+        rows={allocations}
+        columns={columns}
+        loading={loading}
+        getRowId={(row) => row.allocationId || row.id}
+        pageSizeOptions={[5, 10, 25]}
+        initialState={{ pagination: { paginationModel: { pageSize: 10 } } }}
+        disableRowSelectionOnClick
+        autoHeight
+        sx={{
+          border: 'none',
+          '& .MuiDataGrid-cell': { py: 1.5 },
+          '& .MuiDataGrid-columnHeaders': {
+            backgroundColor: theme.palette.mode === 'dark' ? 'rgba(255,255,255,0.03)' : 'rgba(103,80,164,0.04)',
+            borderRadius: 1,
+          },
+          '& .MuiDataGrid-row': {
+            transition: 'background-color 0.2s',
+            '&:hover': { backgroundColor: theme.palette.mode === 'dark' ? 'rgba(255,255,255,0.04)' : 'rgba(103,80,164,0.03)' },
+          },
+        }}
+      />
 
       <AnimatePresence>
         {dialogOpen && (
@@ -268,159 +317,345 @@ export default function Allocations() {
             onClose={handleClose}
             maxWidth="md"
             fullWidth
-            PaperProps={{
-              component: motion.div,
-              initial: { opacity: 0, scale: 0.9 },
-              animate: { opacity: 1, scale: 1 },
-              exit: { opacity: 0, scale: 0.9 },
-            }}
+            sx={{ '& .MuiPaper-root': { borderRadius: '16px !important', overflow: 'hidden' } }}
           >
-            <DialogTitle sx={{ fontWeight: 700 }}>
-              {editing ? 'Edit Allocation' : 'Add Allocation'}
+            <DialogTitle sx={{
+              fontWeight: 700,
+              fontSize: '1.25rem',
+              background: `linear-gradient(135deg, ${theme.palette.primary.main} 0%, ${theme.palette.primary.dark} 100%)`,
+              color: '#fff',
+              px: 3,
+              py: 2.5,
+              display: 'flex',
+              alignItems: 'center',
+              gap: 1.5,
+            }}>
+              <WorkHistoryIcon sx={{ fontSize: 28, opacity: 0.9 }} />
+              {editing ? 'Edit Allocation' : 'New Allocation'}
             </DialogTitle>
-            <DialogContent>
-              <Grid container spacing={2} sx={{ pt: 1 }}>
+            <DialogContent sx={{
+              px: 3,
+              py: 3,
+              '&::-webkit-scrollbar': { width: 6 },
+              '&::-webkit-scrollbar-thumb': { borderRadius: 3, backgroundColor: theme.palette.mode === 'dark' ? 'rgba(255,255,255,0.15)' : 'rgba(103,80,164,0.25)' }
+            }}>
+              <Grid container spacing={3}>
                 <Grid item xs={12} md={6}>
-                  <Autocomplete
-                    options={employees}
-                    getOptionLabel={(opt) => `${opt.employeeCode} - ${opt.fullName}`}
-                    value={selectedEmployee || null}
-                    onChange={(_, val) => setForm({ ...form, employeeId: val?.employeeId || null })}
-                    renderInput={(params) => (
-                      <TextField
-                        {...params}
-                        label="Employee"
-                        error={!!errors.employeeId}
-                        helperText={errors.employeeId}
-                      />
-                    )}
-                    isOptionEqualToValue={(opt, val) => opt.employeeId === val.employeeId}
-                  />
+                  <Box sx={{
+                    p: 3,
+                    borderRadius: 3,
+                    height: '100%',
+                    backgroundColor: theme.palette.mode === 'dark'
+                      ? 'rgba(255,255,255,0.03)'
+                      : 'rgba(103,80,164,0.04)',
+                    border: `1px solid ${theme.palette.mode === 'dark'
+                      ? 'rgba(255,255,255,0.06)'
+                      : 'rgba(103,80,164,0.1)'}`,
+                    display: 'flex',
+                    flexDirection: 'column',
+                    gap: 2.5,
+                  }}>
+                    <Typography variant="overline" sx={{
+                      fontWeight: 700,
+                      fontSize: '0.7rem',
+                      letterSpacing: '0.12em',
+                      color: theme.palette.primary.main,
+                      display: 'block',
+                    }}>
+                      <PersonIcon sx={{ fontSize: 15, mr: 0.6, verticalAlign: 'text-top' }} />
+                      ASSIGNMENT
+                    </Typography>
+
+                    <Autocomplete
+                      fullWidth
+                      options={employees}
+                      getOptionLabel={(opt) => `${opt.employeeCode} - ${opt.fullName}`}
+                      value={selectedEmployee || null}
+                      onChange={(_, val) => setForm({ ...form, employeeId: val?.employeeId || null })}
+                      renderInput={(params) => (
+                        <TextField
+                          {...params}
+                          label="Employee"
+                          error={!!errors.employeeId}
+                          helperText={errors.employeeId}
+                        />
+                      )}
+                      isOptionEqualToValue={(opt, val) => opt.employeeId === val.employeeId}
+                    />
+
+                    <Autocomplete
+                      fullWidth
+                      options={availableProjects}
+                      getOptionLabel={(opt) => `${opt.projectCode} - ${opt.projectName}`}
+                      value={projects.find((p) => p.projectId === form.projectId) || null}
+                      onChange={(_, val) => setForm({ ...form, projectId: val?.projectId || null })}
+                      renderInput={(params) => (
+                        <TextField
+                          {...params}
+                          label="Project"
+                          error={!!errors.projectId}
+                          helperText={errors.projectId}
+                        />
+                      )}
+                      isOptionEqualToValue={(opt, val) => opt.projectId === val.projectId}
+                    />
+
+                    <TextField
+                      label="Role in Project"
+                      value={form.roleInProject}
+                      onChange={(e) => setForm({ ...form, roleInProject: e.target.value })}
+                      error={!!errors.roleInProject}
+                      helperText={errors.roleInProject}
+                      fullWidth
+                    />
+                  </Box>
                 </Grid>
+
                 <Grid item xs={12} md={6}>
-                  <Autocomplete
-                    options={availableProjects}
-                    getOptionLabel={(opt) => `${opt.projectCode} - ${opt.projectName}`}
-                    value={projects.find((p) => p.projectId === form.projectId) || null}
-                    onChange={(_, val) => setForm({ ...form, projectId: val?.projectId || null })}
-                    renderInput={(params) => (
-                      <TextField
-                        {...params}
-                        label="Project"
-                        error={!!errors.projectId}
-                        helperText={errors.projectId}
-                      />
-                    )}
-                    isOptionEqualToValue={(opt, val) => opt.projectId === val.projectId}
-                  />
-                </Grid>
-                <Grid item xs={12} md={6}>
-                  <Typography gutterBottom sx={{ fontWeight: 500 }}>
-                    Allocation %: <strong>{form.allocationPercent}%</strong>
-                  </Typography>
-                  <Slider
-                    value={form.allocationPercent}
-                    onChange={(_, val) => setForm({ ...form, allocationPercent: val })}
-                    min={1}
-                    max={100}
-                    valueLabelDisplay="auto"
-                    sx={{
-                      '& .MuiSlider-track': {
-                        backgroundColor: allocStatus === 'exceeded' ? theme.palette.error.main : theme.palette.primary.main,
-                      },
-                      '& .MuiSlider-thumb': {
-                        backgroundColor: allocStatus === 'exceeded' ? theme.palette.error.main : theme.palette.primary.main,
-                      },
-                    }}
-                  />
-                  {form.employeeId && (
-                    <Box sx={{ mt: 1 }}>
-                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 0.5 }}>
-                        <Typography variant="body2" color="text.secondary">
-                          Available: {remainingPercent}%
-                        </Typography>
-                        {allocStatus === 'valid' && (
-                          <CheckCircleIcon sx={{ color: theme.palette.success.main, fontSize: 18 }} />
-                        )}
-                        {allocStatus === 'exceeded' && (
-                          <WarningIcon sx={{ color: theme.palette.error.main, fontSize: 18 }} />
-                        )}
+                  <Box sx={{
+                    p: 3,
+                    borderRadius: 3,
+                    height: '100%',
+                    backgroundColor: theme.palette.mode === 'dark'
+                      ? 'rgba(255,255,255,0.03)'
+                      : 'rgba(103,80,164,0.04)',
+                    border: `1px solid ${theme.palette.mode === 'dark'
+                      ? 'rgba(255,255,255,0.06)'
+                      : 'rgba(103,80,164,0.1)'}`,
+                    display: 'flex',
+                    flexDirection: 'column',
+                    gap: 2.5,
+                  }}>
+                    <Typography variant="overline" sx={{
+                      fontWeight: 700,
+                      fontSize: '0.7rem',
+                      letterSpacing: '0.12em',
+                      color: theme.palette.primary.main,
+                      display: 'block',
+                    }}>
+                      <CalendarMonthIcon sx={{ fontSize: 15, mr: 0.6, verticalAlign: 'text-top' }} />
+                      ALLOCATION & DATES
+                    </Typography>
+
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+                      <Typography variant="h3" sx={{
+                        fontWeight: 800,
+                        fontVariantNumeric: 'tabular-nums',
+                        lineHeight: 1,
+                        fontSize: { xs: '2rem', md: '2.25rem' },
+                        minWidth: 72,
+                        textAlign: 'center',
+                        color: allocStatus === 'exceeded'
+                          ? theme.palette.error.main
+                          : form.allocationPercent > 70
+                            ? theme.palette.warning.main
+                            : theme.palette.success.main,
+                        transition: 'color 0.3s ease',
+                      }}>
+                        {form.allocationPercent}%
+                      </Typography>
+                      <Box sx={{ flex: 1 }}>
+                        <Slider
+                          value={form.allocationPercent}
+                          onChange={(_, val) => setForm({ ...form, allocationPercent: val })}
+                          min={1}
+                          max={100}
+                          valueLabelDisplay="auto"
+                          marks={[
+                            { value: 0, label: '0%' },
+                            { value: 25, label: '25%' },
+                            { value: 50, label: '50%' },
+                            { value: 75, label: '75%' },
+                            { value: 100, label: '100%' },
+                          ]}
+                          sx={{
+                            '& .MuiSlider-track': {
+                              background: allocStatus === 'exceeded'
+                                ? theme.palette.error.main
+                                : form.allocationPercent > 70
+                                  ? `linear-gradient(90deg, ${theme.palette.success.main}, ${theme.palette.warning.main})`
+                                  : theme.palette.success.main,
+                              border: 'none',
+                              height: 6,
+                              borderRadius: 3,
+                            },
+                            '& .MuiSlider-rail': {
+                              backgroundColor: theme.palette.mode === 'dark' ? 'rgba(255,255,255,0.1)' : 'rgba(103,80,164,0.12)',
+                              height: 6,
+                              borderRadius: 3,
+                            },
+                            '& .MuiSlider-thumb': {
+                              width: 20,
+                              height: 20,
+                              backgroundColor: '#fff',
+                              boxShadow: allocStatus === 'exceeded'
+                                ? `0 2px 8px ${theme.palette.error.main}66`
+                                : `0 2px 8px rgba(103,80,164,0.4)`,
+                              border: `2px solid ${allocStatus === 'exceeded' ? theme.palette.error.main : theme.palette.primary.main}`,
+                              '&:hover, &.Mui-focusVisible': {
+                                boxShadow: allocStatus === 'exceeded'
+                                  ? `0 0 0 8px ${theme.palette.error.main}22`
+                                  : `0 0 0 8px rgba(103,80,164,0.2)`,
+                              },
+                            },
+                            '& .MuiSlider-markLabel': {
+                              fontSize: '0.65rem',
+                              fontWeight: 600,
+                            },
+                            '& .MuiSlider-mark': {
+                              backgroundColor: theme.palette.mode === 'dark' ? 'rgba(255,255,255,0.2)' : 'rgba(103,80,164,0.2)',
+                              height: 8,
+                              width: 2,
+                            },
+                            '& .MuiSlider-markActive': {
+                              backgroundColor: allocStatus === 'exceeded' ? theme.palette.error.main : theme.palette.primary.main,
+                            },
+                          }}
+                        />
                       </Box>
-                      <LinearProgress
-                        variant="determinate"
-                        value={form.allocationPercent}
-                        sx={{
-                          height: 6,
-                          borderRadius: 3,
-                          backgroundColor: theme.palette.mode === 'dark' ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.06)',
-                          '& .MuiLinearProgress-bar': {
-                            backgroundColor: allocStatus === 'exceeded' ? theme.palette.error.main :
-                              form.allocationPercent > 70 ? theme.palette.warning.main : theme.palette.success.main,
+                    </Box>
+
+                    {form.employeeId && (
+                      <>
+                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
+                          <Box sx={{
+                            px: 1.25,
+                            py: 0.35,
+                            borderRadius: 1,
+                            backgroundColor: allocStatus === 'exceeded'
+                              ? `${theme.palette.error.main}18`
+                              : `${theme.palette.success.main}18`,
+                          }}>
+                            <Typography variant="caption" sx={{
+                              fontWeight: 700,
+                              fontSize: '0.7rem',
+                              color: allocStatus === 'exceeded'
+                                ? theme.palette.error.main
+                                : theme.palette.success.main,
+                            }}>
+                              {allocStatus === 'valid' ? '✓ Valid' : '✗ Exceeded'}
+                            </Typography>
+                          </Box>
+                          <Typography variant="body2" color="text.secondary" sx={{ fontWeight: 600 }}>
+                            Available: {remainingPercent}%
+                          </Typography>
+                          <Box sx={{ flex: 1 }} />
+                          <Typography variant="caption" color="text.secondary">
+                            100% cap
+                          </Typography>
+                        </Box>
+                        <LinearProgress
+                          variant="determinate"
+                          value={form.allocationPercent}
+                          sx={{
+                            height: 6,
                             borderRadius: 3,
-                          },
-                        }}
+                            backgroundColor: theme.palette.mode === 'dark' ? 'rgba(255,255,255,0.08)' : 'rgba(103,80,164,0.1)',
+                            '& .MuiLinearProgress-bar': {
+                              background: allocStatus === 'exceeded'
+                                ? `linear-gradient(90deg, ${theme.palette.warning.main}, ${theme.palette.error.main})`
+                                : form.allocationPercent > 70
+                                  ? `linear-gradient(90deg, ${theme.palette.success.main}, ${theme.palette.warning.main})`
+                                  : `linear-gradient(90deg, ${theme.palette.success.main}88, ${theme.palette.success.main})`,
+                              borderRadius: 3,
+                              boxShadow: `0 1px 4px ${allocStatus === 'exceeded' ? theme.palette.error.main : theme.palette.success.main}44`,
+                            },
+                          }}
+                        />
+                      </>
+                    )}
+
+                    {workload && (
+                      <Box sx={{
+                        p: 2,
+                        borderRadius: 2.5,
+                        background: theme.palette.mode === 'dark'
+                          ? 'linear-gradient(135deg, rgba(103,80,164,0.12), rgba(103,80,164,0.04))'
+                          : 'linear-gradient(135deg, rgba(103,80,164,0.06), rgba(103,80,164,0.02))',
+                        border: `1px solid ${theme.palette.mode === 'dark'
+                          ? 'rgba(255,255,255,0.06)'
+                          : 'rgba(103,80,164,0.08)'}`,
+                      }}>
+                        <Typography variant="caption" sx={{
+                          fontWeight: 600,
+                          fontSize: '0.6rem',
+                          letterSpacing: '0.1em',
+                          textTransform: 'uppercase',
+                          color: theme.palette.text.secondary,
+                          mb: 0.75,
+                          display: 'block',
+                        }}>
+                          Current Workload
+                        </Typography>
+                        <Typography variant="body2" sx={{
+                          fontWeight: 500,
+                          color: theme.palette.text.secondary,
+                          mb: 1.5,
+                          fontSize: '0.75rem',
+                        }}>
+                          {selectedEmployee?.fullName}
+                        </Typography>
+                        <Box sx={{ display: 'flex', alignItems: 'baseline', gap: 0.5, mb: 1 }}>
+                          <Typography variant="h5" sx={{
+                            fontWeight: 800,
+                            color: workload.totalAllocation > 80 ? theme.palette.error.main : theme.palette.primary.main,
+                          }}>
+                            {workload.totalAllocation}%
+                          </Typography>
+                          <Typography variant="body2" color="text.secondary" sx={{ fontWeight: 500 }}>
+                            allocated of 100%
+                          </Typography>
+                        </Box>
+                        <Box sx={{
+                          width: '100%',
+                          height: 4,
+                          borderRadius: 2,
+                          backgroundColor: theme.palette.mode === 'dark' ? 'rgba(255,255,255,0.06)' : 'rgba(103,80,164,0.08)',
+                          overflow: 'hidden',
+                        }}>
+                          <Box sx={{
+                            width: `${Math.min(workload.totalAllocation, 100)}%`,
+                            height: '100%',
+                            borderRadius: 2,
+                            background: `linear-gradient(90deg, ${theme.palette.primary.main}, ${workload.totalAllocation > 80 ? theme.palette.error.main : theme.palette.primary.light})`,
+                            transition: 'width 0.4s ease',
+                          }} />
+                        </Box>
+                      </Box>
+                    )}
+
+                    <Box sx={{
+                      height: '1px',
+                      backgroundColor: theme.palette.mode === 'dark'
+                        ? 'rgba(255,255,255,0.08)'
+                        : 'rgba(103,80,164,0.12)',
+                    }} />
+
+                    <Box sx={{ display: 'flex', gap: 2 }}>
+                      <TextField
+                        label="Start Date"
+                        type="date"
+                        value={form.startDate}
+                        onChange={(e) => setForm({ ...form, startDate: e.target.value })}
+                        error={!!errors.startDate}
+                        helperText={errors.startDate}
+                        InputLabelProps={{ shrink: true }}
+                        slotProps={{ inputLabel: { shrink: true } }}
+                        fullWidth
                       />
-                      {allocStatus === 'exceeded' && (
-                        <Alert severity="error" sx={{ mt: 1, py: 0, borderRadius: 2 }}>
-                          Exceeds available capacity!
-                        </Alert>
-                      )}
-                      {allocStatus === 'valid' && (
-                        <Alert severity="success" sx={{ mt: 1, py: 0, borderRadius: 2 }}>
-                          Valid allocation
-                        </Alert>
-                      )}
+                      <TextField
+                        label="End Date"
+                        type="date"
+                        value={form.endDate}
+                        onChange={(e) => setForm({ ...form, endDate: e.target.value })}
+                        error={!!errors.endDate}
+                        helperText={errors.endDate}
+                        InputLabelProps={{ shrink: true }}
+                        slotProps={{ inputLabel: { shrink: true } }}
+                        fullWidth
+                      />
                     </Box>
-                  )}
-                </Grid>
-                <Grid item xs={12} md={6}>
-                  {workload && (
-                    <Box sx={{ p: 2, borderRadius: 2, backgroundColor: theme.palette.mode === 'dark' ? 'rgba(255,255,255,0.03)' : 'rgba(103,80,164,0.04)' }}>
-                      <Typography variant="body2" color="text.secondary" gutterBottom>
-                        Current Workload for {selectedEmployee?.fullName}
-                      </Typography>
-                      <Typography variant="h5" sx={{ fontWeight: 700, color: theme.palette.primary.main }}>
-                        {workload.totalAllocation}%
-                      </Typography>
-                      <Typography variant="body2" color="text.secondary">
-                        Currently allocated across projects
-                      </Typography>
-                    </Box>
-                  )}
-                </Grid>
-                <Grid item xs={12} md={6}>
-                  <TextField
-                    label="Role in Project"
-                    value={form.roleInProject}
-                    onChange={(e) => setForm({ ...form, roleInProject: e.target.value })}
-                    error={!!errors.roleInProject}
-                    helperText={errors.roleInProject}
-                    fullWidth
-                  />
-                </Grid>
-                <Grid item xs={12} md={6}>
-                  <TextField
-                    label="Start Date"
-                    type="date"
-                    value={form.startDate}
-                    onChange={(e) => setForm({ ...form, startDate: e.target.value })}
-                    error={!!errors.startDate}
-                    helperText={errors.startDate}
-                    InputLabelProps={{ shrink: true }}
-                    fullWidth
-                  />
-                </Grid>
-                <Grid item xs={12} md={6}>
-                  <TextField
-                    label="End Date"
-                    type="date"
-                    value={form.endDate}
-                    onChange={(e) => setForm({ ...form, endDate: e.target.value })}
-                    error={!!errors.endDate}
-                    helperText={errors.endDate}
-                    InputLabelProps={{ shrink: true }}
-                    fullWidth
-                  />
+                  </Box>
                 </Grid>
               </Grid>
             </DialogContent>
@@ -434,7 +669,6 @@ export default function Allocations() {
           </Dialog>
         )}
       </AnimatePresence>
-
       <Dialog open={deleteOpen} onClose={() => setDeleteOpen(false)} maxWidth="xs">
         <DialogTitle sx={{ fontWeight: 700 }}>Confirm Delete</DialogTitle>
         <DialogContent>

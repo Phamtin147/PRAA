@@ -4,6 +4,7 @@ import com.company.praa.dto.ProjectDto;
 import com.company.praa.entity.Project;
 import com.company.praa.entity.ProjectStatus;
 import com.company.praa.repository.ProjectRepository;
+import com.company.praa.repository.ResourceAllocationRepository;
 import com.company.praa.exception.ProjectNotFoundException;
 import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -19,6 +20,9 @@ public class ProjectService {
 
     @Autowired
     private ProjectRepository repository;
+
+    @Autowired
+    private ResourceAllocationRepository allocationRepository;
 
     public ProjectDto createProject(ProjectDto dto) {
         Project project = Project.builder()
@@ -59,6 +63,9 @@ public class ProjectService {
     public void deleteProject(Long id) {
         if (!repository.existsById(id)) {
             throw new ProjectNotFoundException("Project not found with ID " + id);
+        }
+        if (!allocationRepository.findByProjectProjectId(id).isEmpty()) {
+            throw new RuntimeException("Cannot delete project with active allocations");
         }
         repository.deleteById(id);
     }

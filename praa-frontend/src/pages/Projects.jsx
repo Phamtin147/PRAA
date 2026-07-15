@@ -2,10 +2,11 @@ import { useState, useEffect, useCallback } from 'react';
 import {
   Box, Button, Card, CardContent, Typography, TextField, Dialog, DialogTitle,
   DialogContent, DialogActions, IconButton, Tooltip, Chip, InputAdornment,
-  CircularProgress, Alert, Snackbar, Stack, MenuItem, useTheme,
+  CircularProgress, Alert, Snackbar, Stack, Autocomplete, Paper, Grid, useTheme,
 } from '@mui/material';
 import {
   Add as AddIcon, Edit as EditIcon, Delete as DeleteIcon, Search as SearchIcon,
+  Work as WorkIcon,
 } from '@mui/icons-material';
 import { DataGrid } from '@mui/x-data-grid';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -17,7 +18,7 @@ const statusColors = {
   COMPLETED: { color: '#616161', bg: '#F5F5F5' },
 };
 
-const initialForm = { projectCode: '', name: '', customer: '', status: 'PLANNING', startDate: '', endDate: '' };
+const initialForm = { projectCode: '', projectName: '', customer: '', status: 'PLANNING', startDate: '', endDate: '' };
 
 export default function Projects() {
   const theme = useTheme();
@@ -50,7 +51,7 @@ export default function Projects() {
   const validate = () => {
     const errs = {};
     if (!form.projectCode.trim()) errs.projectCode = 'Project Code is required';
-    if (!form.name.trim()) errs.name = 'Name is required';
+    if (!form.projectName.trim()) errs.projectName = 'Name is required';
     if (!form.customer.trim()) errs.customer = 'Customer is required';
     if (!form.startDate) errs.startDate = 'Start date is required';
     if (!form.endDate) errs.endDate = 'End date is required';
@@ -71,7 +72,7 @@ export default function Projects() {
   const handleOpenEdit = (proj) => {
     setForm({
       projectCode: proj.projectCode,
-      name: proj.name,
+      projectName: proj.projectName,
       customer: proj.customer,
       status: proj.status,
       startDate: proj.startDate,
@@ -94,7 +95,7 @@ export default function Projects() {
     setSubmitting(true);
     try {
       if (editing) {
-        await updateProject(editing.id, form);
+        await updateProject(editing.projectId || editing.id, form);
         setSnackbar({ open: true, message: 'Project updated successfully', severity: 'success' });
       } else {
         await createProject(form);
@@ -117,7 +118,7 @@ export default function Projects() {
   const handleDeleteConfirm = async () => {
     if (!deleteTarget) return;
     try {
-      await deleteProject(deleteTarget.id);
+      await deleteProject(deleteTarget.projectId || deleteTarget.id);
       setSnackbar({ open: true, message: 'Project deleted successfully', severity: 'success' });
       setDeleteOpen(false);
       setDeleteTarget(null);
@@ -140,7 +141,7 @@ export default function Projects() {
     { field: 'projectCode', headerName: 'Code', width: 110, renderCell: (params) => (
       <Chip label={params.value} size="small" variant="outlined" color="primary" />
     )},
-    { field: 'name', headerName: 'Project Name', flex: 1, minWidth: 150 },
+    { field: 'projectName', headerName: 'Project Name', flex: 1, minWidth: 150 },
     { field: 'customer', headerName: 'Customer', width: 140 },
     {
       field: 'status',
@@ -252,18 +253,22 @@ export default function Projects() {
             onClose={handleClose}
             maxWidth="sm"
             fullWidth
-            PaperProps={{
-              component: motion.div,
-              initial: { opacity: 0, scale: 0.9 },
-              animate: { opacity: 1, scale: 1 },
-              exit: { opacity: 0, scale: 0.9 },
-            }}
+            sx={{ '& .MuiPaper-root': { borderRadius: '16px !important', overflow: 'hidden' } }}
           >
-            <DialogTitle sx={{ fontWeight: 700 }}>
+            <DialogTitle sx={{
+              fontWeight: 700,
+              fontSize: '1.25rem',
+              background: `linear-gradient(135deg, ${theme.palette.primary.main} 0%, ${theme.palette.primary.dark} 100%)`,
+              color: '#fff',
+              px: 3,
+              py: 2.5,
+              display: 'flex', alignItems: 'center', gap: 1.5,
+            }}>
+              <WorkIcon sx={{ fontSize: 28, opacity: 0.9 }} />
               {editing ? 'Edit Project' : 'Add Project'}
             </DialogTitle>
             <DialogContent>
-              <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2, pt: 1 }}>
+              <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2.5, pt: 2 }}>
                 <TextField
                   label="Project Code"
                   value={form.projectCode}
@@ -275,10 +280,10 @@ export default function Projects() {
                 />
                 <TextField
                   label="Project Name"
-                  value={form.name}
-                  onChange={(e) => setForm({ ...form, name: e.target.value })}
-                  error={!!errors.name}
-                  helperText={errors.name}
+                  value={form.projectName}
+                  onChange={(e) => setForm({ ...form, projectName: e.target.value })}
+                  error={!!errors.projectName}
+                  helperText={errors.projectName}
                   fullWidth
                 />
                 <TextField
@@ -289,37 +294,66 @@ export default function Projects() {
                   helperText={errors.customer}
                   fullWidth
                 />
-                <TextField
-                  select
-                  label="Status"
+                <Autocomplete
+                  options={['PLANNING', 'ACTIVE', 'COMPLETED']}
+                  getOptionLabel={(opt) =>
+                    opt === 'PLANNING' ? 'Planning' :
+                    opt === 'ACTIVE' ? 'Active' : 'Completed'
+                  }
                   value={form.status}
-                  onChange={(e) => setForm({ ...form, status: e.target.value })}
+                  onChange={(_, val) => setForm({ ...form, status: val || 'PLANNING' })}
+                  disableClearable
                   fullWidth
-                >
-                  <MenuItem value="PLANNING">Planning</MenuItem>
-                  <MenuItem value="ACTIVE">Active</MenuItem>
-                  <MenuItem value="COMPLETED">Completed</MenuItem>
-                </TextField>
-                <TextField
-                  label="Start Date"
-                  type="date"
-                  value={form.startDate}
-                  onChange={(e) => setForm({ ...form, startDate: e.target.value })}
-                  error={!!errors.startDate}
-                  helperText={errors.startDate}
-                  InputLabelProps={{ shrink: true }}
-                  fullWidth
+                  renderOption={(props, option) => {
+                    const sc = statusColors[option] || statusColors.PLANNING;
+                    return (
+                      <Box component="li" {...props} sx={{ display: 'flex', alignItems: 'center', gap: 1.5, px: 2, py: 1 }}>
+                        <Box sx={{ width: 8, height: 8, borderRadius: '50%', backgroundColor: sc.color, flexShrink: 0 }} />
+                        <Typography variant="body2" sx={{ fontWeight: 600 }}>
+                          {option === 'PLANNING' ? 'Planning' :
+                           option === 'ACTIVE' ? 'Active' : 'Completed'}
+                        </Typography>
+                      </Box>
+                    );
+                  }}
+                  renderInput={(params) => (
+                    <TextField
+                      {...params}
+                      label="Status"
+                      placeholder="Select status..."
+                      error={!!errors.status}
+                      helperText={errors.status}
+                    />
+                  )}
                 />
-                <TextField
-                  label="End Date"
-                  type="date"
-                  value={form.endDate}
-                  onChange={(e) => setForm({ ...form, endDate: e.target.value })}
-                  error={!!errors.endDate}
-                  helperText={errors.endDate}
-                  InputLabelProps={{ shrink: true }}
-                  fullWidth
-                />
+                <Grid container spacing={2}>
+                  <Grid item xs={6}>
+                    <TextField
+                      label="Start Date"
+                      type="date"
+                      value={form.startDate}
+                      onChange={(e) => setForm({ ...form, startDate: e.target.value })}
+                      error={!!errors.startDate}
+                      helperText={errors.startDate}
+                      slotProps={{ inputLabel: { shrink: true } }}
+                      fullWidth
+                      InputLabelProps={{ shrink: true }}
+                    />
+                  </Grid>
+                  <Grid item xs={6}>
+                    <TextField
+                      label="End Date"
+                      type="date"
+                      value={form.endDate}
+                      onChange={(e) => setForm({ ...form, endDate: e.target.value })}
+                      error={!!errors.endDate}
+                      helperText={errors.endDate}
+                      slotProps={{ inputLabel: { shrink: true } }}
+                      fullWidth
+                      InputLabelProps={{ shrink: true }}
+                    />
+                  </Grid>
+                </Grid>
               </Box>
             </DialogContent>
             <DialogActions sx={{ px: 3, pb: 2 }}>

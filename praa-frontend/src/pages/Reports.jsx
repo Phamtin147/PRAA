@@ -199,8 +199,8 @@ export default function Reports() {
                       <ProgressRing
                         percent={resource.available}
                         size={110}
-                        color={resource.availablePercent > 50 ? theme.palette.success.main :
-                          resource.availablePercent > 20 ? theme.palette.warning.main :
+                        color={resource.available > 50 ? theme.palette.success.main :
+                          resource.available > 20 ? theme.palette.warning.main :
                           theme.palette.error.main}
                       />
                     </Box>

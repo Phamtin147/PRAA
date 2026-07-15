@@ -13,7 +13,6 @@ import lombok.NoArgsConstructor;
 @Builder
 public class EmployeeDto {
     private Long employeeId;
-    @NotBlank(message = "Employee code is required")
     private String employeeCode;
     @NotBlank(message = "Full name is required")
     private String fullName;

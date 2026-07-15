@@ -6,6 +6,7 @@ import {
 } from '@mui/material';
 import {
   Add as AddIcon, Edit as EditIcon, Delete as DeleteIcon, Search as SearchIcon,
+  Person as PersonIcon,
 } from '@mui/icons-material';
 import { DataGrid } from '@mui/x-data-grid';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -42,7 +43,6 @@ export default function Employees() {
 
   const validate = () => {
     const errs = {};
-    if (!form.employeeCode.trim()) errs.employeeCode = 'Employee Code is required';
     if (!form.fullName.trim()) errs.fullName = 'Full Name is required';
     if (!form.email.trim()) {
       errs.email = 'Email is required';
@@ -225,14 +225,20 @@ export default function Employees() {
             onClose={handleClose}
             maxWidth="sm"
             fullWidth
-            PaperProps={{
-              component: motion.div,
-              initial: { opacity: 0, scale: 0.9 },
-              animate: { opacity: 1, scale: 1 },
-              exit: { opacity: 0, scale: 0.9 },
-            }}
+            sx={{ '& .MuiPaper-root': { borderRadius: '16px !important', overflow: 'hidden' } }}
           >
-            <DialogTitle sx={{ fontWeight: 700 }}>
+            <DialogTitle sx={{
+              fontWeight: 700,
+              fontSize: '1.25rem',
+              background: `linear-gradient(135deg, ${theme.palette.primary.main} 0%, ${theme.palette.primary.dark} 100%)`,
+              color: '#fff',
+              px: 3,
+              py: 2.5,
+              display: 'flex',
+              alignItems: 'center',
+              gap: 1.5,
+            }}>
+              <PersonIcon sx={{ fontSize: 28, opacity: 0.9 }} />
               {editing ? 'Edit Employee' : 'Add Employee'}
             </DialogTitle>
             <DialogContent>
@@ -241,10 +247,25 @@ export default function Employees() {
                   label="Employee Code"
                   value={form.employeeCode}
                   onChange={(e) => setForm({ ...form, employeeCode: e.target.value })}
-                  error={!!errors.employeeCode}
-                  helperText={errors.employeeCode}
-                  disabled={!!editing}
+                  placeholder="Auto-generated (EMP008...)"
+                  disabled
                   fullWidth
+                  helperText={form.employeeCode ? `Code: ${form.employeeCode}` : 'Auto-generated on save'}
+                  sx={{
+                    '& .MuiInputBase-root.Mui-disabled': {
+                      '& .MuiOutlinedInput-notchedOutline': {
+                        borderColor: 'rgba(103, 80, 164, 0.15)',
+                        borderStyle: 'dashed',
+                      },
+                    },
+                    '& .MuiInputLabel-root.Mui-disabled': {
+                      color: 'text.secondary',
+                    },
+                    '& .MuiFormHelperText-root': {
+                      color: 'text.secondary',
+                      fontStyle: 'italic',
+                    },
+                  }}
                 />
                 <TextField
                   label="Full Name"
