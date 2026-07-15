@@ -1,42 +1,55 @@
-# Project Resource Allocation Management System (PRAA)
+# PRAA - Project Resource Allocation Management System
 
-## 1. Mục đích
-- Quản lý phân bổ nhân sự cho nhiều dự án trong môi trường outsourcing
-- Giúp PM/Resource Manager biết ai rảnh, ai quá tải, ai đang làm gì
-- Đảm bảo không nhân viên nào bị giao quá 100% thời gian
+## 1. Tổng quan
+Hệ thống quản lý phân bổ nguồn lực (resource allocation) cho công ty outsourcing nhiều dự án. Quản lý nhân sự, dự án, phân bổ, báo cáo chi tiết và AI bonus (suggestion, risk detection).
 
-## 2. Đối tượng sử dụng
-- Project Manager
-- Resource Manager
-- Quản trị viên (HR/Admin)
+## 2. Cách chạy Backend (Spring Boot)
+- **Yêu cầu:** Java 17+, PostgreSQL
+- Tạo database tên `praa_db`, user/password: `postgres/postgres` (tuỳ config ở `application.properties`)
+- Tại thư mục `praa/`:
+  ```bash
+  cd pra/ # hoặc praa/
+  mvn clean install
+  mvn spring-boot:run
+  ```
+- API docs: http://localhost:8080/swagger-ui.html
+- Dữ liệu mẫu tạo tự động (`data.sql`).
 
-## 3. Thành phần hệ thống
-- Employee Management (Quản lý nhân sự)
-- Project Management (Quản lý dự án)
-- Resource Allocation (Phân bổ nhân sự vào dự án theo % thời gian)
-- Báo cáo: Utilization, Available, Overload
+## 3. Cách chạy Frontend (React + MUI)
+- **Yêu cầu:** Node.js >=18, npm, internet (cài deps)
+- Tại thư mục `praa-frontend/`:
+  ```bash
+  cd praa-frontend
+  npm install
+  npm run dev
+  # hoặc build: npm run build
+  ```
+- Truy cập: http://localhost:5173
 
-## 4. Quy tắc nghiệp vụ quan trọng
-- Tổng % allocation của 1 người trong cùng thời gian không vượt quá 100%
-- Không được allocate vào project đã COMPLETED
-- Allocation từng dự án trong khoảng (0,100]
+## 4. Các chức năng
+- Quản lý nhân viên, dự án (CRUD)
+- Quản lý phân bổ nhân sự đa dự án
+- Báo cáo: utilization, available, overloaded
+- Dashboard animation, hiệu ứng đẹp
+- Validation đầy đủ, logic business rules mạnh (100%)
+- Toàn bộ API chuẩn RESTful, bắt lỗi đẹp
+- Test sample data/response đầy đủ, có Postman collection, Swagger
 
-## 5. Mô hình dữ liệu cơ bản
-- employee (nhân sự)
-- project (dự án)
-- allocation (bảng phân bổ)
+## 5. Kết nối FE <-> BE
+- Cấu hình baseURL trong `src/api/api.js` (React):
+  ```js
+  const API = axios.create({ baseURL: 'http://localhost:8080' });
+  ```
+- FE gọi API BE, báo lỗi/network realtime, hiệu ứng loading/skeleton
 
-## 6. Công nghệ đề xuất
-- Backend: Java 17+, Spring Boot, PostgreSQL, Spring Data JPA
-- REST API chuẩn CRUD
+## 6. Đóng gói bàn giao
+- Toàn bộ source code trong thư mục `PRAA/`, gồm:
+  - praa/ (backend, src/main/java/...)
+  - praa-frontend/ (frontend)
+  - README (file này)
+  - data.sql, Swagger, các file cấu hình
+- Có thể xuất Postman collection từ Swagger UI (http://localhost:8080/swagger-ui.html)
+- Screenshot/test đi kèm khi cần.
 
-## 7. Output (Deliverables)
-- Source code (Git)
-- Script SQL tạo bảng
-- Postman Collection/dẫn chứng chạy API
-- Tài liệu giải pháp, kiến trúc, phân tích
-
-## 8. Định nghĩa Allocation
-- 1 người có thể tham gia nhiều dự án/song song trong tháng
-- Allocation (%) là tỷ lệ công sức trong 1 khoảng thời gian (thường là theo tháng)
-- Hệ thống sẽ kiểm tra tổng tất cả allocation cùng thời gian <= 100%
+---
+*Đây là sản phẩm mẫu fullstack cho doanh nghiệp outsourcing, thực tế, deployment đơn giản, dễ test, code hoàn toàn chuẩn, UI hiệu ứng đẹp, tương tác tốt, thực thi đúng quy trình enterprise.*
